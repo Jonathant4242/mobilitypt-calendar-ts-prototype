@@ -40,9 +40,12 @@ export function renderApp(): void {
 
 export function updateStatus(message: string): void {
   const status = document.querySelector<HTMLParagraphElement>("#status-message");
-  if (status) {
-    status.textContent = message;
+
+  if (!status) {
+    throw new Error("Status message element not found.");
   }
+
+  status.textContent = message;
 }
 
 export function getSelectedCalendarId(): string {

@@ -1,4 +1,5 @@
-import type { CalendarEvent } from "./types";
+import { OpenSlot } from "./models";
+import type { CalendarEvent, TimeRange } from "./types";
 
 const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
@@ -151,7 +152,7 @@ export async function signOut(): Promise<void> {
   }
 }
 
-export async function fetchUpcomingEvents(): Promise<CalendarEvent[]> {
+export async function fetchUpcomingEvents(calendarId = "primary"): Promise<CalendarEvent[]> {
   if (!gapi.client.getToken()) {
     throw new Error("User is not signed in.");
   }
@@ -160,8 +161,14 @@ export async function fetchUpcomingEvents(): Promise<CalendarEvent[]> {
   const nextWeek = new Date();
   nextWeek.setDate(now.getDate() + 7);
 
+  const calendarResponse = await gapi.client.calendar.calendars.get({
+    calendarId,
+  });
+
+  const calendarName = calendarResponse.result.summary || calendarId;
+
   const response = await gapi.client.calendar.events.list({
-    calendarId: "primary",
+    calendarId,
     timeMin: now.toISOString(),
     timeMax: nextWeek.toISOString(),
     showDeleted: false,
@@ -178,13 +185,21 @@ export async function fetchUpcomingEvents(): Promise<CalendarEvent[]> {
       const provider = getOpenProvider(item.summary);
       const category = getOpenCategory(item.summary);
 
+      const timeRange: TimeRange = [
+        formatDateTime(item.start?.dateTime || item.start?.date),
+        formatDateTime(item.end?.dateTime || item.end?.date),
+      ];
+
+      const slot = new OpenSlot(provider, category, timeRange);
+
       return {
         id: item.id ?? crypto.randomUUID(),
-        summary: `${provider} — ${category}`,
-        start: formatDateTime(item.start?.dateTime || item.start?.date),
-        end: formatDateTime(item.end?.dateTime || item.end?.date),
+        summary: slot.getDisplayTitle(),
+        start: timeRange[0],
+        end: timeRange[1],
         location: item.location ?? "",
         description: item.description ?? item.summary ?? "",
+        calendarName,
       };
     });
 }
