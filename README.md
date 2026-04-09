@@ -4,7 +4,7 @@ This project is a TypeScript prototype for a personal Google Calendar UI that re
 
 ## Instructions for Build and Use
 
-[Software Demo]
+[Software Demo] (https://www.loom.com/share/445b2cb7dfb641b2b73b7bed3dcbdb6c)
 
 Steps to build and/or run the software:
 
